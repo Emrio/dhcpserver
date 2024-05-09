@@ -225,7 +225,7 @@ int
 fill_dhcp_reply (dhcp_msg *request, dhcp_msg *reply,
 		 address_binding *binding, uint8_t type)
 {
-    static dhcp_option type_opt, server_id_opt;
+    static dhcp_option type_opt, server_id_opt, lease_time_opt;
 
     type_opt.id = DHCP_MESSAGE_TYPE;
     type_opt.len = 1;
@@ -237,6 +237,17 @@ fill_dhcp_reply (dhcp_msg *request, dhcp_msg *reply,
     memcpy(server_id_opt.data, &pool.server_id, sizeof(pool.server_id));
     append_option(&reply->opts, &server_id_opt);
     
+    lease_time_opt.id = IP_ADDRESS_LEASE_TIME;
+    lease_time_opt.len = 4;
+    if (type == DHCP_OFFER) {
+    memcpy(lease_time_opt.data, &pool.lease_time, sizeof(pool.pending_time));
+    } else {
+        time_t remaining_time = binding->binding_time + binding->lease_time - time(NULL);
+        uint32_t remaining_time2 = remaining_time;
+        memcpy(lease_time_opt.data, &remaining_time2, sizeof(remaining_time2));
+    }
+    append_option(&reply->opts, &lease_time_opt);
+
     if(binding != NULL) {
 	reply->hdr.yiaddr = binding->address;
     }
