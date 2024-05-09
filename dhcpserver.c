@@ -366,7 +366,11 @@ int
 serve_dhcp_request (dhcp_msg *request, dhcp_msg *reply)
 {
     address_binding *binding = search_binding(&pool.bindings, request->hdr.chaddr,
-					      request->hdr.hlen, STATIC_OR_DYNAMIC, PENDING);
+					      request->hdr.hlen, STATIC_OR_DYNAMIC, EMPTY);
+
+    if (binding != NULL && binding->status == ASSOCIATED) {
+	    return fill_dhcp_reply(request, reply, binding, DHCP_ACK);
+    }
 
     uint32_t server_id = 0;
     dhcp_option *server_id_opt = search_option(&request->opts, SERVER_IDENTIFIER);
